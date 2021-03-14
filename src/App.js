@@ -11,12 +11,16 @@ if(!firebase.apps.length){
   }
 
 function App() {
+  const [newUser, setNewUser] = useState(false);
   const [user, setUser] = useState({
     isSignedIn: false,
+    // newUser: false,
     name: '',
     email: '',
     password: '',
-    photo: ''
+    photo: '',
+    error: '',
+    success: false,
   });
   const provider = new firebase.auth.GoogleAuthProvider();
   const handleSignIn = () =>{
@@ -58,12 +62,66 @@ function App() {
     })
   }
 
-  const handleSubmit = () =>{
-    console.log('onSubmit');
+  const handleSubmit = (e) =>{
+    // console.log(user.email, user.password);
+    if(newUser && user.email && user.password){
+      // console.log('submitting')
+      firebase.auth().createUserWithEmailAndPassword(user.email, user.password)
+    .then((res) => { 
+      const newUserInfo = {...user};
+      newUserInfo.error = '';
+      newUserInfo.success = true;
+      setUser(newUserInfo);
+      updateUserName(user.name);
+      // console.log(res);
+  })
+  .catch((error) => {
+    // Handle errors here
+    // var errorCode = error.code;
+    const newUserInfo = {...user};
+    newUserInfo.error = error.message;
+    newUserInfo.success = false;
+    setUser(newUserInfo);
+    // ..
+  });
+    }
+
+    if(!newUser && user.email && user.password){
+      firebase.auth().signInWithEmailAndPassword(user.email, user.password)
+  .then((res) => {
+    // Signed in
+    const newUserInfo = {...user};
+    newUserInfo.error = '';
+    newUserInfo.success = true;
+    setUser(newUserInfo);
+    console.log('sign in user info', res.user);
+    // ...
+  })
+  .catch((error) => {
+    const newUserInfo = {...user};
+    newUserInfo.error = error.message;
+    newUserInfo.success = false;
+    setUser(newUserInfo);
+  });
+    }
+    e.preventDefault();
+  }
+
+  const updateUserName = (name) =>{
+    const user = firebase.auth().currentUser;
+
+      user.updateProfile({
+        displayName: name,
+        // photoURL: "https://example.com/jane-q-user/profile.jpg"
+      }).then(function() {
+        console.log('User name updated successfully')
+      }).catch((error) => {
+        console.log(error)
+      });
   }
 
   const handleBlur = (e) =>{
-    debugger;
+    // debugger;
     console.log(e.target.name, e.target.value)
     let isFormValid = true;
     if(e.target.name === 'email'){
@@ -103,18 +161,23 @@ function App() {
       }
     
         <h1>Own Authentication</h1>
-        <p>Your Name: {user.name}</p>
+        <input type="checkbox" name = "newUser" onChange={() =>setNewUser(!newUser)}></input>
+        <label htmlFor ="newUser"> New User Sign Up</label>
+      
+        {/* <p>Your Name: {user.name}</p>
         <p>Email: {user.email}</p>
-        <p>PassWord: {user.password}</p>
+        <p>PassWord: {user.password}</p> */}
         <form onSubmit={handleSubmit}>
-            <input onBlur={handleBlur} type="text" name= "name" placeholder="Your Name" required></input>
+           {newUser && <input onBlur={handleBlur} type="text" name= "name" placeholder="Your Name" required></input>}
             <br/>
             <input onBlur={handleBlur} type="text" name="email" placeholder="E-mail" required/>
             <br/>
             <input onBlur={handleBlur} type="password" name="password" id="" placeholder="your password" required/>
             <br/>
-            <input type="submit" value="Submit"/>
+            <input type="submit" value={newUser? 'Sign Up' : 'Sign In'}/>
         </form>
+        <p style={{color: 'red'}}>{user.error}</p>
+       {user.success && <p style={{color: 'green'}}>User {newUser ? 'created' : 'Logged in'} successfully</p>}
     </div>
   );
 }
