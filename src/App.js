@@ -22,9 +22,10 @@ function App() {
     error: '',
     success: false,
   });
-  const provider = new firebase.auth.GoogleAuthProvider();
+  const googleProvider = new firebase.auth.GoogleAuthProvider();
+  const fbProvider = new firebase.auth.FacebookAuthProvider();
   const handleSignIn = () =>{
-    firebase.auth().signInWithPopup(provider)
+    firebase.auth().signInWithPopup(googleProvider)
     .then (res => {
       // console.log(res)
       const {photoURL, displayName, email } = res.user;
@@ -43,6 +44,37 @@ function App() {
       console.log(err.message);
     })
   }
+
+  //Facebook handler
+  const handleFbSignIn = () =>{
+    firebase.auth().signInWithPopup(fbProvider)
+    .then((result) => {
+    /** @type {firebase.auth.OAuthCredential} */
+    var credential = result.credential;
+
+    // The signed-in user info.
+    var user = result.user;
+    // This gives you a Facebook Access Token. You can use it to access the Facebook API.
+    var accessToken = credential.accessToken;
+    console.log('fbUser after signIn', user);
+
+    // ...
+  })
+  .catch((error) => {
+    // Handle Errors here.
+    var errorCode = error.code;
+    var errorMessage = error.message;
+    // The email of the user's account used.
+    var email = error.email;
+    // The firebase.auth.AuthCredential type that was used.
+    var credential = error.credential;
+
+    // ...
+  });
+
+  }
+
+
   const handleSignOut =() =>{
     console.log('Clicked sign outttttt')
     firebase.auth().signOut()
@@ -159,7 +191,7 @@ function App() {
           <img src={user.photo} alt=""/>
         </div>
       }
-    
+      <br/><button onClick={handleFbSignIn}>Sign in by using Facebook</button>
         <h1>Own Authentication</h1>
         <input type="checkbox" name = "newUser" onChange={() =>setNewUser(!newUser)}></input>
         <label htmlFor ="newUser"> New User Sign Up</label>
